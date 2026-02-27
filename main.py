@@ -4,9 +4,9 @@ import os.path
 from cube import RubiksCube
 from solver import IDA_star, build_heuristic_db
 
-MAX_MOVES = 5
+MAX_MOVES = 6
 NEW_HEURISTICS = False
-HEURISTIC_FILE = 'heuristic.json'
+HEURISTIC_FILE = 'heuristic_mpi.json'
 
 #--------------------------------
 cube = RubiksCube(n=3)
@@ -38,8 +38,8 @@ if h_db is None or NEW_HEURISTICS is True:
         )
 #--------------------------------
 cube.shuffle(
-    l_rot = MAX_MOVES if MAX_MOVES < 5 else 5,
-    u_rot = MAX_MOVES
+    l_rot = 8,
+    u_rot = 8
 )
 cube.show()
 print('----------')
