@@ -39,7 +39,7 @@ if h_db is None or NEW_HEURISTICS is True:
 #--------------------------------
 cube.shuffle(
     l_rot = 8,
-    u_rot = 8
+    u_rot = 10
 )
 cube.show()
 print('----------')
