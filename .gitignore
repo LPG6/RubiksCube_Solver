@@ -1,7 +1,7 @@
 __pycache__/
 notebooks/
 .json
-.csv
+*.csv
 *.json
 heuristic.json
 heuristic_mpi.json
