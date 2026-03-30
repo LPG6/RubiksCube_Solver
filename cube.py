@@ -63,6 +63,41 @@ class RubiksCube:
                 check = False
                 break
         return check
+    
+    def solved_l1(self):
+        """
+        Verifica se a Primeira Camada (L1 - Bottom) está resolvida.
+        """
+        # A face 5 (Bottom) precisa ter apenas 1 cor
+        bottom_colors = set(c for row in self.cube[5] for c in row)
+        if len(bottom_colors) > 1: return False
+        
+        # A linha de baixo (n-1) das faces laterais (1, 2, 3, 4) precisa ser uniforme
+        # e a cor deve bater com o centro daquela face para estar alinhada
+        centro = self.n // 2
+        for face in range(1, 5):
+            bottom_row = self.cube[face][self.n - 1]
+            if len(set(bottom_row)) > 1: return False
+            if bottom_row[0] != self.cube[face][centro][centro]: return False
+            
+        return True
+
+    def solved_f2l(self):
+        """
+        Verifica se as Duas Primeiras Camadas (F2L - Bottom + Middle) estão resolvidas.
+        """
+        # Se a primeira não está, a segunda também não está
+        if not self.solved_l1(): return False
+        
+        centro = self.n // 2
+        # Verifica a(s) linha(s) do meio das faces laterais
+        for face in range(1, 5):
+            for row_idx in range(1, self.n - 1): # Pega as linhas do meio (exclui topo e base)
+                middle_row = self.cube[face][row_idx]
+                if len(set(middle_row)) > 1: return False
+                if middle_row[0] != self.cube[face][centro][centro]: return False
+                
+        return True
 
     def stringify(self):
         """
