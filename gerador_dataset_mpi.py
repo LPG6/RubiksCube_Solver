@@ -12,13 +12,13 @@ def main():
 
     # --- CONFIGURAÇÕES DA GERAÇÃO ---
     EPISODES = 20_000   # Quantos cubos cada núcleo vai resolver/embaralhar
-    MAX_MOVES = 20      # Profundidade máxima de embaralhamento (Nível Hard!)
+    MAX_MOVES = 20      # Profundidade máxima de embaralhamento 
     CSV_FILE = 'dataset_rubiks.csv'
     # --------------------------------
 
     actions =[(r, n, d) for r in ['h', 'v', 's'] for d in[0, 1] for n in range(3)]
     
-    # Dicionário local de cada núcleo para evitar duplicatas e guardar o menor caminho
+    
     local_data = {}
 
     if rank == 0:
@@ -42,7 +42,7 @@ def main():
             elif a[0] == 'v': cube.vertical_twist(a[1], a[2])
             elif a[0] == 's': cube.side_twist(a[1], a[2])
 
-            # Lógica Multi-Head de Distância:
+            
             # Se a camada estiver resolvida, distância reseta para 0. Se quebrou, soma 1.
             dist_l1 = 0 if cube.solved_l1() else dist_l1 + 1
             dist_f2l = 0 if cube.solved_f2l() else dist_f2l + 1
@@ -67,7 +67,7 @@ def main():
     # O Mestre puxa os dicionários de todos os Ranks
     gathered_data = comm.gather(local_data, root=0)
 
-    # O Mestre consolida tudo e escreve o CSV
+    
     if rank == 0:
         global_data = {}
         print("Consolidando dicionario global e removendo duplicatas...")
