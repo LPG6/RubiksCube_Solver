@@ -5,3 +5,5 @@ notebooks/
 *.json
 heuristic.json
 heuristic_mpi.json
+*.pth
+
