@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 import torch.optim as optim
 import time
+import os
 
 
 # 1. Mapa de cores para números
@@ -96,82 +97,92 @@ class RubiksCNN(nn.Module):
         return self.head_l1(features), self.head_f2l(features), self.head_full(features)
     
 
-def treinar_modelo(tipo_modelo="MLP", epochs=3, batch_size=1024, lr=0.001):
-    # Verifica se tem Placa de Vídeo (NVIDIA CUDA), se não, usa o Processador (CPU)
+def treinar_modelo(tipo_modelo="MLP", epochs= 5, batch_size=2048, lr=0.001):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"Preparando treinamento no dispositivo: {device}")
 
-    # Carrega os dados (Pode demorar uns segundinhos porque são 4 milhões de linhas)
     dataset = RubiksDataset('dataset_rubiks.csv')
-    
-    # O DataLoader quebra os 4 milhões de dados em "pacotinhos" (batches) de 1024
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
-    # Escolhe qual "Cérebro" vamos treinar
     if tipo_modelo == "CNN":
         modelo = RubiksCNN().to(device)
     else:
         modelo = RubiksMLP().to(device)
 
-    # Otimizador (O "Professor" que atualiza as sinapses da rede)
     optimizer = optim.Adam(modelo.parameters(), lr=lr)
-    
-    # Função de Erro (Erro Quadrático Médio)
     criterion = nn.MSELoss() 
 
     print(f"\n--- Iniciando Treinamento da Rede {tipo_modelo} ---")
     print(f"Total de épocas: {epochs} | Tamanho do Lote: {batch_size}")
     
     inicio_treino = time.time()
+    
+    # Lista para salvar o histórico de erros
+    historico_erros =[]
 
     for epoch in range(epochs):
         modelo.train()
         running_loss = 0.0
 
         for batch_idx, (x_mlp, x_cnn, labels) in enumerate(dataloader):
-            # 1. Pega os dados e envia pra memória correta (CPU/GPU)
             inputs = x_cnn if tipo_modelo == "CNN" else x_mlp
             inputs, labels = inputs.to(device), labels.to(device)
 
-            # Zera a memória de aprendizado da rodada anterior
             optimizer.zero_grad()
-
-            # 2. Forward (A Rede chuta a distância)
             out_l1, out_f2l, out_full = modelo(inputs)
 
-            # Separa o gabarito real do CSV. O .unsqueeze(1) ajusta o formato da matriz
             target_l1 = labels[:, 0].unsqueeze(1)
             target_f2l = labels[:, 1].unsqueeze(1)
             target_full = labels[:, 2].unsqueeze(1)
 
-            # 3. Calcula o Erro (Loss) das 3 cabeças e soma tudo!
             loss_l1 = criterion(out_l1, target_l1)
             loss_f2l = criterion(out_f2l, target_f2l)
             loss_full = criterion(out_full, target_full)
             
             loss = loss_l1 + loss_f2l + loss_full
-
-            # 4. Backward (Calcula o ajuste necessário) e Otimização (Aplica o ajuste)
             loss.backward()
             optimizer.step()
 
             running_loss += loss.item()
 
-            # Mostra no painel a cada 500 lotes processados
             if batch_idx % 500 == 0:
-                print(f"Época[{epoch+1}/{epochs}] | Lote [{batch_idx}/{len(dataloader)}] | Perda (Erro): {loss.item():.4f}")
+                print(f"Época [{epoch+1}/{epochs}] | Lote [{batch_idx}/{len(dataloader)}] | Perda (Erro): {loss.item():.4f}")
 
-        # Resumo da Época
         perda_media = running_loss / len(dataloader)
         print(f"=== Fim da Época {epoch+1} | Perda Média: {perda_media:.4f} ===")
+        
+        # Salva a perda média da época
+        historico_erros.append({
+            "Modelo": tipo_modelo,
+            "Epoca": epoch + 1,
+            "MSE": perda_media
+        })
 
-    # Terminou o treino! Salva o "cérebro" em um arquivo .pth
     tempo_total = (time.time() - inicio_treino) / 60
     nome_arquivo = f"modelo_{tipo_modelo.lower()}.pth"
     torch.save(modelo.state_dict(), nome_arquivo)
+    
+    # --- SALVAR O HISTÓRICO EM CSV ---
+    df_novo = pd.DataFrame(historico_erros)
+    arquivo_csv = 'historico_treinamento.csv'
+    
+    # Se o arquivo já existe, anexa os dados (para juntar MLP e CNN no mesmo arquivo)
+    if os.path.exists(arquivo_csv):
+        df_existente = pd.read_csv(arquivo_csv)
+        df_final = pd.concat([df_existente, df_novo], ignore_index=True)
+    else:
+        df_final = df_novo
+        
+    df_final.to_csv(arquivo_csv, index=False)
+
     print(f"\nTreinamento Finalizado em {tempo_total:.2f} minutos!")
-    print(f"Pesos neurais salvos no arquivo '{nome_arquivo}'!")
+    print(f"Pesos salvos em '{nome_arquivo}' e histórico salvo em '{arquivo_csv}'.")
 
 if __name__ == '__main__':
-    # Escolha qual modelo treinar mudando o parâmetro: "MLP" ou "CNN"
-    treinar_modelo(tipo_modelo="CNN", epochs=3, batch_size=2048)
+    # APAGUE (ou exclua) o historico_treinamento.csv se ele já existir na sua pasta antes de rodar isso!
+    
+    # Treinando a MLP por 6 épocas
+    treinar_modelo(tipo_modelo="MLP", epochs=10, batch_size=2048)
+    
+    # Treinando a CNN por 6 épocas
+    treinar_modelo(tipo_modelo="CNN", epochs=10, batch_size=2048)
