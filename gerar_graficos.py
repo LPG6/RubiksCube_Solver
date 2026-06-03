@@ -144,7 +144,7 @@ def plotar_curva_aprendizado_real():
              color='#d62728', linewidth=2, markersize=6, label='CNN (Convolucional)')
 
     # Marcação da Zona de Estabilização (Ponto Ótimo de Parada)
-    plt.axvline(x=3, color='gray', linestyle=':', linewidth=2, alpha=0.8)
+    plt.axvline(x=2, color='gray', linestyle=':', linewidth=2, alpha=0.8)
     plt.text(3.15, df_cnn['MSE'].max() - 1, 'Início dos Retornos Decrescentes', 
              color='#333333', fontsize=10, fontweight='bold', ha='left')
 
@@ -166,7 +166,7 @@ def plotar_curva_aprendizado_real():
     plt.show()
 
 if __name__ == '__main__':
-    plotar_taxa_sucesso()
-    plotar_excesso_movimentos() 
-    plotar_tempo_inferencia() # <--- NOVO GRÁFICO GERADO AQUI!
+    #plotar_taxa_sucesso()
+    #plotar_excesso_movimentos() 
+    #plotar_tempo_inferencia() 
     plotar_curva_aprendizado_real()
